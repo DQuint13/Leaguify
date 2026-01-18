@@ -1,0 +1,130 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'RDS PostgreSQL database stack for Leaguify'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    Description: Environment name (dev, staging, prod)
+  
+  DBInstanceClass:
+    Type: String
+    Default: db.t3.micro
+    Description: RDS instance class
+  
+  DBName:
+    Type: String
+    Default: leaguify
+    Description: Database name
+  
+  DBUsername:
+    Type: String
+    Default: postgres
+    Description: Database master username
+    NoEcho: true
+  
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: Database master password
+    MinLength: 8
+
+Resources:
+  # DB Subnet Group
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for Leaguify RDS instance
+      SubnetIds:
+        - Fn::ImportValue: !Sub '${Environment}-Leaguify-PrivateSubnet1Id'
+        - Fn::ImportValue: !Sub '${Environment}-Leaguify-PrivateSubnet2Id'
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-leaguify-db-subnet-group'
+
+  # RDS PostgreSQL Instance
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub '${Environment}-leaguify-db'
+      DBInstanceClass: !Ref DBInstanceClass
+      Engine: postgres
+      EngineVersion: '15.4'
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      DBName: !Ref DBName
+      AllocatedStorage: 20
+      StorageType: gp3
+      StorageEncrypted: true
+      VPCSecurityGroups:
+        - Fn::ImportValue: !Sub '${Environment}-Leaguify-RDSSecurityGroupId'
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: '03:00-04:00'
+      PreferredMaintenanceWindow: 'mon:04:00-mon:05:00'
+      PubliclyAccessible: false
+      MultiAZ: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-leaguify-db'
+
+  # Store database credentials in Parameter Store
+  DBHostParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${Environment}/leaguify/db/host'
+      Type: String
+      Value: !GetAtt DBInstance.Endpoint.Address
+      Description: RDS database host
+
+  DBPortParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${Environment}/leaguify/db/port'
+      Type: String
+      Value: !GetAtt DBInstance.Endpoint.Port
+      Description: RDS database port
+
+  DBNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${Environment}/leaguify/db/name'
+      Type: String
+      Value: !Ref DBName
+      Description: RDS database name
+
+  DBUsernameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${Environment}/leaguify/db/username'
+      Type: String
+      Value: !Ref DBUsername
+      Description: RDS database username
+
+  DBPasswordParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${Environment}/leaguify/db/password'
+      Type: SecureString
+      Value: !Ref DBPassword
+      Description: RDS database password
+
+Outputs:
+  DBEndpoint:
+    Description: RDS instance endpoint
+    Value: !GetAtt DBInstance.Endpoint.Address
+    Export:
+      Name: !Sub '${Environment}-Leaguify-DBEndpoint'
+
+  DBPort:
+    Description: RDS instance port
+    Value: !GetAtt DBInstance.Endpoint.Port
+    Export:
+      Name: !Sub '${Environment}-Leaguify-DBPort'
+
+  DBName:
+    Description: Database name
+    Value: !Ref DBName
+    Export:
+      Name: !Sub '${Environment}-Leaguify-DBName'

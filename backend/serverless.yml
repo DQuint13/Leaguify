@@ -1,0 +1,55 @@
+service: leaguify-backend
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    DB_SSL: 'true'
+  vpc:
+    securityGroupIds:
+      - ${cf:${self:provider.stage}-main-stack.LambdaSecurityGroupId}
+    subnetIds:
+      - ${cf:${self:provider.stage}-main-stack.PrivateSubnet1Id}
+      - ${cf:${self:provider.stage}-main-stack.PrivateSubnet2Id}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - ec2:CreateNetworkInterface
+            - ec2:DescribeNetworkInterfaces
+            - ec2:DeleteNetworkInterface
+          Resource: '*'
+        - Effect: Allow
+          Action:
+            - ssm:GetParameter
+            - ssm:GetParameters
+          Resource:
+            - arn:aws:ssm:${self:provider.region}:*:parameter/${self:provider.stage}/leaguify/db/*
+
+functions:
+  api:
+    handler: src/lambda.handler
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors: true
+      - http:
+          path: /
+          method: ANY
+          cors: true
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 3001
