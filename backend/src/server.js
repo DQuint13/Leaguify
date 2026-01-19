@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.raw({ type: 'image/*', limit: '5mb' }));
 
 // Initialize database connection (only for local development, not Lambda)
 if (process.env.AWS_LAMBDA_FUNCTION_NAME === undefined) {

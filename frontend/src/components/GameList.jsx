@@ -42,6 +42,7 @@ function GameList({ games, players, leagueId, onOutcomeAdded }) {
       <table className="table">
         <thead>
           <tr>
+            <th>Cycle</th>
             <th>Game #</th>
             <th>Status</th>
             <th>Date Played</th>
@@ -51,6 +52,7 @@ function GameList({ games, players, leagueId, onOutcomeAdded }) {
         <tbody>
           {games.map((game) => (
             <tr key={game.id}>
+              <td>Cycle {game.cycle_number || 1}</td>
               <td>Game {game.game_number}</td>
               <td>
                 <span className={`badge badge-${game.status}`}>
@@ -91,7 +93,7 @@ function GameList({ games, players, leagueId, onOutcomeAdded }) {
         .filter((g) => g.status === 'completed' && gameOutcomes[g.id])
         .map((game) => (
           <div key={game.id} style={{ marginTop: '20px' }}>
-            <h4>Game {game.game_number} Results</h4>
+            <h4>Cycle {game.cycle_number || 1} - Game {game.game_number} Results</h4>
             {loadingOutcomes[game.id] ? (
               <div className="loading">Loading results...</div>
             ) : (
@@ -99,24 +101,65 @@ function GameList({ games, players, leagueId, onOutcomeAdded }) {
                 <thead>
                   <tr>
                     <th>Player</th>
-                    <th>Score</th>
+                    <th>Victory Points</th>
                     <th>Result</th>
                   </tr>
                 </thead>
                 <tbody>
                   {gameOutcomes[game.id]?.map((outcome) => {
                     const player = players.find((p) => p.id === outcome.player_id);
+                    const getInitials = (name) => {
+                      if (!name) return '?';
+                      const parts = name.trim().split(' ');
+                      if (parts.length >= 2) {
+                        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+                      }
+                      return name.substring(0, 2).toUpperCase();
+                    };
                     return (
                       <tr key={outcome.id}>
-                        <td>{player?.name || 'Unknown'}</td>
-                        <td>{outcome.score}</td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div
+                              style={{
+                                width: '35px',
+                                height: '35px',
+                                borderRadius: '50%',
+                                overflow: 'hidden',
+                                backgroundColor: '#e0e0e0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {player?.avatar_url ? (
+                                <img
+                                  src={player.avatar_url}
+                                  alt={player.name}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                              ) : (
+                                <span style={{ fontSize: '12px', color: '#666' }}>
+                                  {getInitials(player?.name || 'Unknown')}
+                                </span>
+                              )}
+                            </div>
+                            <span>{player?.name || 'Unknown'}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <strong style={{ fontSize: '18px', color: outcome.result === 'win' ? '#27ae60' : '#333' }}>
+                            {outcome.score}
+                          </strong>
+                        </td>
                         <td>
                           <span
                             className={`badge ${
                               outcome.result === 'win' ? 'badge-completed' : 'badge-pending'
                             }`}
                           >
-                            {outcome.result}
+                            {outcome.result === 'win' ? '🏆 Win' : 'Loss'}
                           </span>
                         </td>
                       </tr>
