@@ -29,7 +29,14 @@ function AddGameOutcome({ game, players, onOutcomeAdded, onCancel }) {
         score: scores[player.id] || 0,
       }));
 
-      await addGameOutcomes(game.id, outcomes);
+      const response = await addGameOutcomes(game.id, outcomes);
+      
+      // Show notification if a new cycle was started
+      if (response.cycleStarted && response.newCycleNumber) {
+        // You can add a toast notification here if desired
+        console.log(`Cycle ${response.newCycleNumber} started automatically!`);
+      }
+      
       onOutcomeAdded();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add game outcomes');
@@ -58,7 +65,7 @@ function AddGameOutcome({ game, players, onOutcomeAdded, onCancel }) {
         ))}
         <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
           <button type="submit" className="btn btn-success" disabled={loading}>
-            {loading ? 'Saving...' : 'Save Results'}
+            {loading ? 'Submitting...' : 'Submit Game'}
           </button>
           <button
             type="button"

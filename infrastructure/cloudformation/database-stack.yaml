@@ -41,6 +41,10 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${Environment}-leaguify-db-subnet-group'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: Leaguify
 
   # RDS PostgreSQL Instance
   DBInstance:
@@ -68,6 +72,10 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${Environment}-leaguify-db'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: Leaguify
 
   # Store database credentials in Parameter Store
   DBHostParameter:

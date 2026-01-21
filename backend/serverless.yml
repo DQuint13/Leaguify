@@ -10,6 +10,8 @@ provider:
   environment:
     NODE_ENV: ${self:provider.stage}
     DB_SSL: 'true'
+    AVATAR_BUCKET_NAME: ${cf:${self:provider.stage}-leaguify-backend-stack.AvatarBucketName, ''}
+    AWS_REGION: ${self:provider.region}
   vpc:
     securityGroupIds:
       - ${cf:${self:provider.stage}-main-stack.LambdaSecurityGroupId}
@@ -31,6 +33,19 @@ provider:
             - ssm:GetParameters
           Resource:
             - arn:aws:ssm:${self:provider.region}:*:parameter/${self:provider.stage}/leaguify/db/*
+            - arn:aws:ssm:${self:provider.region}:*:parameter/${self:provider.stage}/leaguify/avatars/*
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:DeleteObject
+          Resource:
+            - ${cf:${self:provider.stage}-leaguify-backend-stack.AvatarBucketArn, ''}/*
+        - Effect: Allow
+          Action:
+            - s3:ListBucket
+          Resource:
+            - ${cf:${self:provider.stage}-leaguify-backend-stack.AvatarBucketArn, ''}
 
 functions:
   api:

@@ -27,9 +27,17 @@ Resources:
         RestrictPublicBuckets: true
       VersioningConfiguration:
         Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
       Tags:
         - Key: Name
           Value: !Sub '${Environment}-leaguify-frontend'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: Leaguify
 
   # CloudFront Origin Access Control (OAC)
   CloudFrontOAC:
@@ -88,6 +96,10 @@ Resources:
         Tags:
           - Key: Name
             Value: !Sub '${Environment}-leaguify-frontend'
+          - Key: Environment
+            Value: !Ref Environment
+          - Key: Project
+            Value: Leaguify
 
   # S3 Bucket Policy for CloudFront OAC access
   FrontendBucketPolicy:
@@ -113,6 +125,10 @@ Outputs:
     Value: !Ref FrontendBucket
     Export:
       Name: !Sub '${Environment}-Leaguify-FrontendBucketName'
+
+  ApiGatewayUrlNote:
+    Description: Note - Set VITE_API_BASE_URL environment variable to the API Gateway URL before building the frontend
+    Value: !Sub 'API Gateway URL parameter: ${ApiGatewayUrl}. Set VITE_API_BASE_URL=${ApiGatewayUrl} before running npm run build'
 
   CloudFrontDistributionId:
     Description: CloudFront distribution ID

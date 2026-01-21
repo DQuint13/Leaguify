@@ -6,7 +6,9 @@ const {
   getGamesByLeague,
   getCurrentCycleGames,
   startNewCycle,
+  addGameToLeague,
   createMockData,
+  clearMockData,
 } = require('../models/database');
 
 async function createLeagueHandler(req, res) {
@@ -160,6 +162,32 @@ async function createMockDataHandler(req, res) {
   }
 }
 
+async function clearMockDataHandler(req, res) {
+  try {
+    const { id: leagueId } = req.params;
+    const result = await clearMockData(leagueId);
+    res.json(result);
+  } catch (error) {
+    console.error('Error clearing mock data:', error);
+    res.status(500).json({ error: error.message || 'Failed to clear mock data' });
+  }
+}
+
+async function addGameHandler(req, res) {
+  try {
+    const { id: leagueId } = req.params;
+    const result = await addGameToLeague(leagueId);
+    res.status(201).json({
+      message: 'Game added successfully',
+      game: result,
+    });
+  } catch (error) {
+    console.error('Error adding game:', error);
+    const statusCode = error.message.includes('not found') ? 404 : 500;
+    res.status(statusCode).json({ error: error.message || 'Failed to add game' });
+  }
+}
+
 module.exports = {
   createLeagueHandler,
   getAllLeaguesHandler,
@@ -167,5 +195,7 @@ module.exports = {
   getPlayersHandler,
   getGamesHandler,
   startNewCycleHandler,
+  addGameHandler,
   createMockDataHandler,
+  clearMockDataHandler,
 };

@@ -56,6 +56,13 @@ async function createTables() {
       END $$;
     `);
 
+    // Set default avatar for existing players without avatars
+    await client.query(`
+      UPDATE players 
+      SET avatar_url = '/StephAvatar.png' 
+      WHERE avatar_url IS NULL OR avatar_url = '';
+    `);
+
     // Create games table
     await client.query(`
       CREATE TABLE IF NOT EXISTS games (
@@ -78,6 +85,29 @@ async function createTables() {
           WHERE table_name='games' AND column_name='cycle_number'
         ) THEN
           ALTER TABLE games ADD COLUMN cycle_number INTEGER DEFAULT 1;
+        END IF;
+      END $$;
+    `);
+
+    // Fix unique constraint to include cycle_number if old constraint exists
+    await client.query(`
+      DO $$ 
+      BEGIN
+        -- Drop old constraint if it exists (without cycle_number)
+        IF EXISTS (
+          SELECT 1 FROM pg_constraint 
+          WHERE conname = 'games_league_id_game_number_key'
+        ) THEN
+          ALTER TABLE games DROP CONSTRAINT games_league_id_game_number_key;
+        END IF;
+        
+        -- Add new constraint with cycle_number if it doesn't exist
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint 
+          WHERE conname = 'games_league_id_cycle_number_game_number_key'
+        ) THEN
+          ALTER TABLE games ADD CONSTRAINT games_league_id_cycle_number_game_number_key 
+          UNIQUE(league_id, cycle_number, game_number);
         END IF;
       END $$;
     `);
@@ -133,13 +163,14 @@ async function createLeague(name, numPlayers, numGames, playerNames) {
       [leagueId, name, numPlayers, numGames]
     );
 
-    // Create players with provided names
+    // Create players with provided names and default avatar
+    const DEFAULT_AVATAR_URL = '/StephAvatar.png';
     const playerIds = [];
     for (let i = 0; i < numPlayers; i++) {
       const playerId = uuidv4();
       await client.query(
-        'INSERT INTO players (id, league_id, name) VALUES ($1, $2, $3)',
-        [playerId, leagueId, playerNames[i].trim()]
+        'INSERT INTO players (id, league_id, name, avatar_url) VALUES ($1, $2, $3, $4)',
+        [playerId, leagueId, playerNames[i].trim(), DEFAULT_AVATAR_URL]
       );
       playerIds.push(playerId);
     }
@@ -443,6 +474,94 @@ async function startNewCycle(leagueId) {
   }
 }
 
+async function addGameToLeague(leagueId) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Get league info
+    const league = await getLeagueById(leagueId);
+    if (!league) {
+      throw new Error('League not found');
+    }
+
+    // Get current max cycle number
+    const maxCycleResult = await client.query(
+      'SELECT COALESCE(MAX(cycle_number), 0) as max_cycle FROM games WHERE league_id = $1',
+      [leagueId]
+    );
+    const currentCycle = (maxCycleResult.rows[0].max_cycle || 0) || 1;
+
+    // Get the next game number for the current cycle
+    const maxGameResult = await client.query(
+      'SELECT COALESCE(MAX(game_number), 0) as max_game FROM games WHERE league_id = $1 AND cycle_number = $2',
+      [leagueId, currentCycle]
+    );
+    const nextGameNumber = (maxGameResult.rows[0].max_game || 0) + 1;
+
+    // Create the new game
+    const gameId = uuidv4();
+    await client.query(
+      'INSERT INTO games (id, league_id, game_number, cycle_number, status) VALUES ($1, $2, $3, $4, $5)',
+      [gameId, leagueId, nextGameNumber, currentCycle, 'pending']
+    );
+
+    await client.query('COMMIT');
+    return { gameId, gameNumber: nextGameNumber, cycleNumber: currentCycle };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function checkAndStartNewCycleIfComplete(leagueId) {
+  try {
+    // Get league info to know num_games
+    const league = await getLeagueById(leagueId);
+    if (!league) {
+      return { cycleStarted: false, error: 'League not found' };
+    }
+
+    // Get current max cycle number
+    const maxCycleResult = await pool.query(
+      'SELECT COALESCE(MAX(cycle_number), 0) as max_cycle FROM games WHERE league_id = $1',
+      [leagueId]
+    );
+    const currentCycle = (maxCycleResult.rows[0].max_cycle || 0) || 1;
+
+    // Count completed games in current cycle
+    const completedGamesResult = await pool.query(
+      'SELECT COUNT(*) as completed_count FROM games WHERE league_id = $1 AND cycle_number = $2 AND status = $3',
+      [leagueId, currentCycle, 'completed']
+    );
+    const completedCount = parseInt(completedGamesResult.rows[0].completed_count || 0);
+
+    // Check if cycle is complete (completed games >= num_games)
+    if (completedCount >= league.num_games) {
+      // Start new cycle
+      const result = await startNewCycle(leagueId);
+      return { 
+        cycleStarted: true, 
+        newCycleNumber: result.cycleNumber,
+        completedCount,
+        numGames: league.num_games
+      };
+    }
+
+    return { 
+      cycleStarted: false, 
+      completedCount,
+      numGames: league.num_games,
+      currentCycle
+    };
+  } catch (error) {
+    console.error('Error checking cycle completion:', error);
+    return { cycleStarted: false, error: error.message };
+  }
+}
+
 async function updatePlayers(updates) {
   if (!Array.isArray(updates)) {
     throw new Error('updates must be an array');
@@ -494,6 +613,36 @@ async function updatePlayers(updates) {
   }
 }
 
+async function clearMockData(leagueId) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Delete all game outcomes for this league
+    await client.query(
+      `DELETE FROM game_outcomes 
+       WHERE game_id IN (
+         SELECT id FROM games WHERE league_id = $1
+       )`,
+      [leagueId]
+    );
+
+    // Delete all games for this league
+    await client.query(
+      'DELETE FROM games WHERE league_id = $1',
+      [leagueId]
+    );
+
+    await client.query('COMMIT');
+    return { message: 'Mock data cleared successfully' };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function createMockData(leagueId) {
   const client = await pool.connect();
   try {
@@ -520,17 +669,54 @@ async function createMockData(leagueId) {
       throw new Error('No players found in league');
     }
 
+    // Find the highest existing cycle number
+    const maxCycleResult = await client.query(
+      'SELECT COALESCE(MAX(cycle_number), 0) as max_cycle FROM games WHERE league_id = $1',
+      [leagueId]
+    );
+    const startCycle = parseInt(maxCycleResult.rows[0]?.max_cycle || 0) + 1;
+
     // Create 2 completed cycles with mock data
-    for (let cycleNum = 1; cycleNum <= 2; cycleNum++) {
+    for (let cycleOffset = 0; cycleOffset < 2; cycleOffset++) {
+      const cycleNum = startCycle + cycleOffset;
+      
+      // Check if this cycle already exists
+      const existingCycleCheck = await client.query(
+        'SELECT COUNT(*) as count FROM games WHERE league_id = $1 AND cycle_number = $2',
+        [leagueId, cycleNum]
+      );
+      
+      if (parseInt(existingCycleCheck.rows[0].count) > 0) {
+        console.log(`Cycle ${cycleNum} already exists, skipping...`);
+        continue;
+      }
+
       // Create games for this cycle
       const gameIds = [];
       for (let gameNum = 1; gameNum <= num_games; gameNum++) {
         const gameId = uuidv4();
-        await client.query(
-          'INSERT INTO games (id, league_id, game_number, cycle_number, status, date_played) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)',
+        // Use ON CONFLICT to handle any duplicate key issues
+        const insertResult = await client.query(
+          `INSERT INTO games (id, league_id, game_number, cycle_number, status, date_played) 
+           VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+           ON CONFLICT (league_id, cycle_number, game_number) DO UPDATE SET status = EXCLUDED.status
+           RETURNING id`,
           [gameId, leagueId, gameNum, cycleNum, 'completed']
         );
-        gameIds.push(gameId);
+        
+        // Get the game ID (either from insert or fetch if conflict occurred)
+        if (insertResult.rows.length > 0) {
+          gameIds.push(insertResult.rows[0].id);
+        } else {
+          // If no return (shouldn't happen with DO UPDATE), fetch it
+          const gameCheck = await client.query(
+            'SELECT id FROM games WHERE league_id = $1 AND cycle_number = $2 AND game_number = $3',
+            [leagueId, cycleNum, gameNum]
+          );
+          if (gameCheck.rows.length > 0) {
+            gameIds.push(gameCheck.rows[0].id);
+          }
+        }
       }
 
       // Add mock outcomes for each game
@@ -580,5 +766,8 @@ module.exports = {
   updatePlayers,
   getPlayerVictories,
   startNewCycle,
+  addGameToLeague,
+  checkAndStartNewCycleIfComplete,
   createMockData,
+  clearMockData,
 };

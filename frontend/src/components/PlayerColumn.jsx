@@ -1,6 +1,6 @@
 import React from 'react';
 import PlayerCard from './PlayerCard';
-import StatCard from './StatCard';
+import TrophySticker from './TrophySticker';
 
 function PlayerColumn({ player, statistics, onPlayerClick }) {
   const playerStats = statistics.find(stat => stat.id === player.id);
@@ -8,32 +8,50 @@ function PlayerColumn({ player, statistics, onPlayerClick }) {
   const gameWins = playerStats?.gameWins || 0;
   const currentCyclePoints = playerStats?.currentCyclePoints || 0;
 
-  // Create trophy display strings
-  const cycleTrophies = cycleWins > 0 ? '🏆'.repeat(Math.min(cycleWins, 5)) : ''; // Max 5 trophies displayed
-  const gameTrophies = gameWins > 0 ? '⭐'.repeat(Math.min(gameWins, 5)) : ''; // Max 5 trophies displayed
+  // Create arrays of stickers (one per win, up to a reasonable display limit)
+  const maxDisplayStickers = 10; // Display up to 10 individual stickers
+  const cycleStickers = Array.from({ length: Math.min(cycleWins, maxDisplayStickers) }, (_, i) => (
+    <TrophySticker key={`cycle-${i}`} type="cycle" icon="🏆" count={cycleWins > maxDisplayStickers && i === maxDisplayStickers - 1 ? cycleWins : 1} />
+  ));
+  
+  const gameStickers = Array.from({ length: Math.min(gameWins, maxDisplayStickers) }, (_, i) => (
+    <TrophySticker key={`game-${i}`} type="game" icon="⭐" count={gameWins > maxDisplayStickers && i === maxDisplayStickers - 1 ? gameWins : 1} />
+  ));
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className="player-column">
       <PlayerCard
         player={player}
         victories={cycleWins}
         currentCyclePoints={currentCyclePoints}
         onClick={onPlayerClick}
       />
-      <div className="stat-cards-container">
-        <StatCard
-          icon={cycleTrophies || '🏆'}
-          value={cycleWins}
-          label="Cycle Wins"
-          color="#FFD700"
-        />
-        <StatCard
-          icon={gameTrophies || '⭐'}
-          value={gameWins}
-          label="Game Wins"
-          color="#FF8C42"
-        />
-      </div>
+      {(cycleWins > 0 || gameWins > 0) && (
+        <div className="sticker-container">
+          {cycleWins > 0 && (
+            <div className="sticker-group">
+              <div className="sticker-group-label">Cycle Wins</div>
+              <div className="sticker-grid">
+                {cycleStickers}
+                {cycleWins > maxDisplayStickers && (
+                  <div className="sticker-more">+{cycleWins - maxDisplayStickers}</div>
+                )}
+              </div>
+            </div>
+          )}
+          {gameWins > 0 && (
+            <div className="sticker-group">
+              <div className="sticker-group-label">Game Wins</div>
+              <div className="sticker-grid">
+                {gameStickers}
+                {gameWins > maxDisplayStickers && (
+                  <div className="sticker-more">+{gameWins - maxDisplayStickers}</div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

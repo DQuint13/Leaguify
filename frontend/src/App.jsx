@@ -3,19 +3,20 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import HomePage from './pages/HomePage';
 import CreateLeague from './pages/CreateLeague';
 import LeagueDashboard from './pages/LeagueDashboard';
+import GameOutcomes from './pages/GameOutcomes';
+import LeaguesManagement from './pages/LeaguesManagement';
 
 function App() {
   return (
     <Router>
       <div className="App">
-        <div className="header" style={{ background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B35 100%)', marginBottom: '0' }}>
-          <h1 style={{ fontFamily: "'Caveat', cursive", fontSize: '2.5rem' }}>Leaguify</h1>
-        </div>
         <div className="container" style={{ maxWidth: '100%', padding: '20px' }}>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/create" element={<CreateLeague />} />
+            <Route path="/leagues" element={<LeaguesManagement />} />
             <Route path="/league/:id" element={<LeagueDashboard />} />
+            <Route path="/league/:id/games" element={<GameOutcomes />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

@@ -133,17 +133,11 @@ function GameList({ games, players, leagueId, onOutcomeAdded }) {
                                 flexShrink: 0,
                               }}
                             >
-                              {player?.avatar_url ? (
-                                <img
-                                  src={player.avatar_url}
-                                  alt={player.name}
-                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                />
-                              ) : (
-                                <span style={{ fontSize: '12px', color: '#666' }}>
-                                  {getInitials(player?.name || 'Unknown')}
-                                </span>
-                              )}
+                              <img
+                                src={player?.avatar_url || '/StephAvatar.png'}
+                                alt={player?.name || 'Unknown'}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
                             </div>
                             <span>{player?.name || 'Unknown'}</span>
                           </div>

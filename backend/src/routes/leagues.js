@@ -8,7 +8,9 @@ const {
   getPlayersHandler,
   getGamesHandler,
   startNewCycleHandler,
+  addGameHandler,
   createMockDataHandler,
+  clearMockDataHandler,
 } = require('../controllers/leagueController');
 const {
   updatePlayerNameHandler,
@@ -50,11 +52,17 @@ router.put('/:id/players', updatePlayersHandler);
 // Get all games in a league
 router.get('/:id/games', getGamesHandler);
 
+// Add a game to a league
+router.post('/:id/games', addGameHandler);
+
 // Start new cycle
 router.post('/:id/cycles', startNewCycleHandler);
 
 // Create mock data for testing
 router.post('/:id/mock-data', createMockDataHandler);
+
+// Clear mock data (delete all games and outcomes, keep league and players)
+router.delete('/:id/mock-data', clearMockDataHandler);
 
 // Update player avatar
 router.put('/:id/players/:playerId/avatar', upload.single('avatar'), updatePlayerAvatarHandler);

@@ -88,28 +88,11 @@ function SkirmishPanel({ currentGame, players, onGameUpdated }) {
             {players.slice(0, midPoint).map((player) => (
               <div key={player.id} className="skirmish-player-card">
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  {player.avatar_url ? (
-                    <img
-                      src={player.avatar_url}
-                      alt={player.name}
-                      className="skirmish-avatar"
-                    />
-                  ) : (
-                    <div
-                      className="skirmish-avatar"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B35 100%)',
-                        color: 'white',
-                        fontSize: '18px',
-                        fontWeight: 'bold',
-                      }}
-                    >
-                      {getInitials(player.name)}
-                    </div>
-                  )}
+                  <img
+                    src={player.avatar_url || '/StephAvatar.png'}
+                    alt={player.name}
+                    className="skirmish-avatar"
+                  />
                   <div style={{ flex: 1, marginLeft: '10px' }}>
                     <div style={{ fontWeight: '600' }}>{player.name}</div>
                   </div>
@@ -124,28 +107,11 @@ function SkirmishPanel({ currentGame, players, onGameUpdated }) {
             {players.slice(midPoint).map((player) => (
               <div key={player.id} className="skirmish-player-card">
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  {player.avatar_url ? (
-                    <img
-                      src={player.avatar_url}
-                      alt={player.name}
-                      className="skirmish-avatar"
-                    />
-                  ) : (
-                    <div
-                      className="skirmish-avatar"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B35 100%)',
-                        color: 'white',
-                        fontSize: '18px',
-                        fontWeight: 'bold',
-                      }}
-                    >
-                      {getInitials(player.name)}
-                    </div>
-                  )}
+                  <img
+                    src={player.avatar_url || '/StephAvatar.png'}
+                    alt={player.name}
+                    className="skirmish-avatar"
+                  />
                   <div style={{ flex: 1, marginLeft: '10px' }}>
                     <div style={{ fontWeight: '600' }}>{player.name}</div>
                   </div>
@@ -185,28 +151,11 @@ function SkirmishPanel({ currentGame, players, onGameUpdated }) {
               return (
                 <div key={outcome.id} className="skirmish-player-card">
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                    {player?.avatar_url ? (
-                      <img
-                        src={player.avatar_url}
-                        alt={player.name}
-                        className="skirmish-avatar"
-                      />
-                    ) : (
-                      <div
-                        className="skirmish-avatar"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B35 100%)',
-                          color: 'white',
-                          fontSize: '18px',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        {getInitials(player?.name || 'Unknown')}
-                      </div>
-                    )}
+                    <img
+                      src={player?.avatar_url || '/StephAvatar.png'}
+                      alt={player?.name || 'Unknown'}
+                      className="skirmish-avatar"
+                    />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: '600' }}>{player?.name || 'Unknown'}</div>
                     </div>
@@ -236,28 +185,11 @@ function SkirmishPanel({ currentGame, players, onGameUpdated }) {
               return (
                 <div key={outcome.id} className="skirmish-player-card">
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                    {player?.avatar_url ? (
-                      <img
-                        src={player.avatar_url}
-                        alt={player.name}
-                        className="skirmish-avatar"
-                      />
-                    ) : (
-                      <div
-                        className="skirmish-avatar"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B35 100%)',
-                          color: 'white',
-                          fontSize: '18px',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        {getInitials(player?.name || 'Unknown')}
-                      </div>
-                    )}
+                    <img
+                      src={player?.avatar_url || '/StephAvatar.png'}
+                      alt={player?.name || 'Unknown'}
+                      className="skirmish-avatar"
+                    />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: '600' }}>{player?.name || 'Unknown'}</div>
                     </div>

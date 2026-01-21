@@ -3,6 +3,7 @@ const {
   addGameOutcomes,
   getGameOutcomes,
   getPlayersByLeague,
+  checkAndStartNewCycleIfComplete,
 } = require('../models/database');
 
 async function addGameOutcomeHandler(req, res) {
@@ -70,9 +71,14 @@ async function addGameOutcomeHandler(req, res) {
 
     await addGameOutcomes(gameId, outcomesWithResults);
 
+    // Check if cycle is complete and start new cycle if needed
+    const cycleCheckResult = await checkAndStartNewCycleIfComplete(game.league_id);
+
     res.json({
       message: 'Game outcomes added successfully',
       gameId,
+      cycleStarted: cycleCheckResult.cycleStarted || false,
+      newCycleNumber: cycleCheckResult.newCycleNumber || null,
     });
   } catch (error) {
     console.error('Error adding game outcomes:', error);

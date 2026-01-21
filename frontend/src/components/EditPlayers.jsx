@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { updatePlayers } from '../services/api';
-import AvatarUpload from './AvatarUpload';
+
+const AVAILABLE_AVATARS = [
+  '/StephAvatar.png',
+  '/DannyAvatar.png',
+  '/DianaAvatar.png',
+  '/MarioAvatar.png',
+];
 
 function EditPlayers({ players, leagueId, onUpdate, onCancel }) {
   const [editedPlayers, setEditedPlayers] = useState([]);
@@ -13,7 +19,7 @@ function EditPlayers({ players, leagueId, onUpdate, onCancel }) {
       players.map((player) => ({
         id: player.id,
         name: player.name,
-        avatar_url: player.avatar_url,
+        avatar_url: player.avatar_url || '/StephAvatar.png',
       }))
     );
   }, [players]);
@@ -22,6 +28,14 @@ function EditPlayers({ players, leagueId, onUpdate, onCancel }) {
     setEditedPlayers((prev) =>
       prev.map((player) =>
         player.id === playerId ? { ...player, name: newName } : player
+      )
+    );
+  };
+
+  const handleAvatarChange = (playerId, avatarUrl) => {
+    setEditedPlayers((prev) =>
+      prev.map((player) =>
+        player.id === playerId ? { ...player, avatar_url: avatarUrl } : player
       )
     );
   };
@@ -47,6 +61,7 @@ function EditPlayers({ players, leagueId, onUpdate, onCancel }) {
         editedPlayers.map((player) => ({
           id: player.id,
           name: player.name.trim(),
+          avatar_url: player.avatar_url,
         }))
       );
       onUpdate();
@@ -65,40 +80,67 @@ function EditPlayers({ players, leagueId, onUpdate, onCancel }) {
 
   return (
     <div className="card">
-      <h3>Edit Player Names</h3>
+      <h3>Edit Players</h3>
       {error && <div className="error">{error}</div>}
       <form onSubmit={handleSubmit}>
         {editedPlayers.map((player, index) => (
           <div key={player.id} style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '8px' }}>
-            <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
-              <AvatarUpload
-                playerId={player.id}
-                currentAvatar={player.avatar_url}
-                leagueId={leagueId}
-                playerName={player.name}
-                onAvatarChange={(updatedPlayer) => {
-                  setEditedPlayers((prev) =>
-                    prev.map((p) =>
-                      p.id === updatedPlayer.id
-                        ? { ...p, avatar_url: updatedPlayer.avatar_url }
-                        : p
-                    )
-                  );
-                  onUpdate();
-                }}
-              />
-              <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor={`player-${player.id}`}>
-                  Player {index + 1} Name
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+              <div style={{ flex: '0 0 auto' }}>
+                <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>
+                  Avatar
                 </label>
-                <input
-                  type="text"
-                  id={`player-${player.id}`}
-                  value={player.name}
-                  onChange={(e) => handleNameChange(player.id, e.target.value)}
-                  placeholder="Enter player name"
-                  required
-                />
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {AVAILABLE_AVATARS.map((avatar) => (
+                    <div
+                      key={avatar}
+                      onClick={() => handleAvatarChange(player.id, avatar)}
+                      style={{
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: '50%',
+                        overflow: 'hidden',
+                        border: player.avatar_url === avatar ? '3px solid #3498db' : '2px solid #ddd',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        backgroundColor: '#A8C5D9',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (player.avatar_url !== avatar) {
+                          e.currentTarget.style.borderColor = '#3498db';
+                          e.currentTarget.style.transform = 'scale(1.1)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (player.avatar_url !== avatar) {
+                          e.currentTarget.style.borderColor = '#ddd';
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }
+                      }}
+                    >
+                      <img
+                        src={avatar}
+                        alt={`Avatar ${avatar}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className="form-group">
+                  <label htmlFor={`player-${player.id}`}>
+                    Player {index + 1} Name
+                  </label>
+                  <input
+                    type="text"
+                    id={`player-${player.id}`}
+                    value={player.name}
+                    onChange={(e) => handleNameChange(player.id, e.target.value)}
+                    placeholder="Enter player name"
+                    required
+                  />
+                </div>
               </div>
             </div>
           </div>

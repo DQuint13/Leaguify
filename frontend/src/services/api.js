@@ -40,6 +40,11 @@ export const getGames = async (leagueId) => {
   return response.data;
 };
 
+export const addGame = async (leagueId) => {
+  const response = await api.post(`/api/leagues/${leagueId}/games`);
+  return response.data;
+};
+
 // Game APIs
 export const addGameOutcomes = async (gameId, outcomes) => {
   const response = await api.post(`/api/games/${gameId}/outcomes`, {
@@ -76,6 +81,11 @@ export const startNewCycle = async (leagueId) => {
 // Mock Data API
 export const createMockData = async (leagueId) => {
   const response = await api.post(`/api/leagues/${leagueId}/mock-data`);
+  return response.data;
+};
+
+export const clearMockData = async (leagueId) => {
+  const response = await api.delete(`/api/leagues/${leagueId}/mock-data`);
   return response.data;
 };
 

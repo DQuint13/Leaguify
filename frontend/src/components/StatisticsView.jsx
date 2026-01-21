@@ -70,17 +70,11 @@ function StatisticsView({ statistics, players }) {
                       flexShrink: 0,
                     }}
                   >
-                    {stat.avatar_url ? (
-                      <img
-                        src={stat.avatar_url}
-                        alt={stat.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <span style={{ fontSize: '14px', color: '#666' }}>
-                        {getInitials(stat.name)}
-                      </span>
-                    )}
+                    <img
+                      src={stat.avatar_url || '/StephAvatar.png'}
+                      alt={stat.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
                   </div>
                   <div>
                     <div style={{ fontWeight: '600' }}>{stat.name}</div>

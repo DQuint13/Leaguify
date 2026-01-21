@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getLeague, getPlayers, getGames, getLeagueStatistics, startNewCycle } from '../services/api';
+import { getLeague, getPlayers, getGames, getLeagueStatistics } from '../services/api';
 import PlayerColumn from '../components/PlayerColumn';
 import CycleTracker from '../components/CycleTracker';
 import EditPlayers from '../components/EditPlayers';
@@ -44,32 +44,6 @@ function LeagueDashboard() {
     loadData();
   };
 
-  const handleStartNewCycle = async () => {
-    if (!window.confirm('Start a new cycle? All current games must be completed. Statistics will be preserved.')) {
-      return;
-    }
-
-    try {
-      await startNewCycle(id);
-      loadData();
-    } catch (err) {
-      alert(err.response?.data?.error || 'Failed to start new cycle');
-    }
-  };
-
-  // Get current cycle number and check if all games are completed
-  const getCurrentCycleInfo = () => {
-    if (games.length === 0) return { cycleNumber: 1, allCompleted: false };
-    
-    const maxCycle = Math.max(...games.map(g => g.cycle_number || 1));
-    const currentCycleGames = games.filter(g => (g.cycle_number || 1) === maxCycle);
-    const allCompleted = currentCycleGames.length > 0 && currentCycleGames.every(g => g.status === 'completed');
-    
-    return { cycleNumber: maxCycle, allCompleted };
-  };
-
-  const cycleInfo = getCurrentCycleInfo();
-
 
   const handlePlayerClick = (player) => {
     setSelectedPlayer(player);
@@ -95,42 +69,26 @@ function LeagueDashboard() {
 
   return (
     <div style={{ padding: '20px', minHeight: '100vh', maxWidth: '1400px', margin: '0 auto' }}>
-      {/* Header with cycle info and new cycle button */}
-      <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-        {cycleInfo.allCompleted && (
-          <div style={{ marginBottom: '15px' }}>
-            <button
-              className="btn btn-success"
-              onClick={handleStartNewCycle}
-              style={{ fontSize: '18px', padding: '12px 24px' }}
-            >
-              🎮 Start New Cycle
-            </button>
-            <p style={{ marginTop: '10px', color: '#8B4513', fontSize: '14px' }}>
-              Cycle {cycleInfo.cycleNumber} Complete! Start a new cycle to continue.
-            </p>
-          </div>
-        )}
-      </div>
-
       {/* Main Game Panel */}
-      <div className="game-panel">
-        <div className="league-name-handwritten">{league.name}</div>
-        <div className="player-columns-container">
-          {players.map((player) => (
-            <PlayerColumn
-              key={player.id}
-              player={player}
-              statistics={statistics}
-              onPlayerClick={() => handlePlayerClick(player)}
-            />
-          ))}
+      <div style={{ position: 'relative', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2px' }}>
+          <div className="league-name-handwritten" style={{ margin: 0 }}>{league.name}</div>
+          <div className="cycle-tracker-top-right" style={{ position: 'static' }}>
+            <CycleTracker games={games} numGames={league.num_games} />
+          </div>
         </div>
-      </div>
-
-      {/* Cycle Tracker */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
-        <CycleTracker games={games} numGames={league.num_games} />
+        <div className="game-panel">
+          <div className="player-columns-container">
+            {players.map((player) => (
+              <PlayerColumn
+                key={player.id}
+                player={player}
+                statistics={statistics}
+                onPlayerClick={() => handlePlayerClick(player)}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Edit Player Modal */}

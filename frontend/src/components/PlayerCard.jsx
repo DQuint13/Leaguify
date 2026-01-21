@@ -10,29 +10,26 @@ function PlayerCard({ player, victories, currentCyclePoints, onClick }) {
     return name.substring(0, 2).toUpperCase();
   };
 
+  // Default avatar for all players
+  const DEFAULT_AVATAR = '/StephAvatar.png';
+  const avatarUrl = player.avatar_url || DEFAULT_AVATAR;
+
   return (
     <div className="player-card" onClick={onClick}>
       <div className="player-avatar-container">
         <div className="player-avatar-glow"></div>
-        {player.avatar_url ? (
-          <img
-            src={player.avatar_url}
-            alt={player.name}
-            className="player-avatar"
-          />
-        ) : (
-          <div className="player-avatar-initials">
-            {getInitials(player.name)}
-          </div>
-        )}
-        {victories > 0 && (
-          <div className="victory-badge">{victories}</div>
-        )}
+        <img
+          src={avatarUrl}
+          alt={player.name}
+          className="player-avatar"
+        />
+      </div>
+      <div className="player-name-banner-container">
+        <div className="player-name-banner">{player.name}</div>
         {currentCyclePoints !== undefined && currentCyclePoints > 0 && (
-          <div className="cycle-points-overlay">{currentCyclePoints}</div>
+          <div className="cycle-points-badge">{currentCyclePoints}</div>
         )}
       </div>
-      <div className="player-name-banner">{player.name}</div>
     </div>
   );
 }

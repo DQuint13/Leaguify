@@ -8,6 +8,36 @@ Parameters:
     Description: Environment name (dev, staging, prod)
 
 Resources:
+  # S3 Bucket for Avatar Storage
+  AvatarBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Environment}-leaguify-avatars-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteIncompleteUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-leaguify-avatars'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: Leaguify
+
   # IAM Role for Lambda
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -43,10 +73,35 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: '*'
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:DeleteObject
+                Resource: !Sub '${AvatarBucket}/*'
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Ref AvatarBucket
+
+  # CloudWatch Log Group for Lambda
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${Environment}-leaguify-api'
+      RetentionInDays: 14
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-leaguify-api-logs'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: Leaguify
 
   # Lambda function for Express API
   ApiLambdaFunction:
     Type: AWS::Lambda::Function
+    DependsOn: LambdaLogGroup
     Properties:
       FunctionName: !Sub '${Environment}-leaguify-api'
       Runtime: nodejs18.x
@@ -66,12 +121,21 @@ Resources:
         Variables:
           NODE_ENV: !Ref Environment
           DB_SSL: 'true'
+          AVATAR_BUCKET_NAME: !Ref AvatarBucket
+          AWS_REGION: !Ref AWS::Region
       VpcConfig:
         SubnetIds:
           - Fn::ImportValue: !Sub '${Environment}-Leaguify-PrivateSubnet1Id'
           - Fn::ImportValue: !Sub '${Environment}-Leaguify-PrivateSubnet2Id'
         SecurityGroupIds:
           - Fn::ImportValue: !Sub '${Environment}-Leaguify-LambdaSecurityGroupId'
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-leaguify-api'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: Leaguify
 
   # API Gateway REST API
   ApiGateway:
@@ -82,6 +146,13 @@ Resources:
       EndpointConfiguration:
         Types:
           - REGIONAL
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-leaguify-api'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: Leaguify
 
   # API Gateway Resource for /api
   ApiResource:
@@ -144,6 +215,15 @@ Resources:
       RestApiId: !Ref ApiGateway
       StageName: !Ref Environment
 
+  # Store avatar bucket name in Parameter Store
+  AvatarBucketParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${Environment}/leaguify/avatars/bucket'
+      Type: String
+      Value: !Ref AvatarBucket
+      Description: S3 bucket name for avatar storage
+
 Outputs:
   ApiGatewayUrl:
     Description: API Gateway endpoint URL
@@ -156,3 +236,21 @@ Outputs:
     Value: !GetAtt ApiLambdaFunction.Arn
     Export:
       Name: !Sub '${Environment}-Leaguify-LambdaFunctionArn'
+
+  LambdaExecutionRoleArn:
+    Description: Lambda execution role ARN
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Export:
+      Name: !Sub '${Environment}-Leaguify-LambdaExecutionRoleArn'
+
+  AvatarBucketName:
+    Description: S3 bucket name for avatar storage
+    Value: !Ref AvatarBucket
+    Export:
+      Name: !Sub '${Environment}-Leaguify-AvatarBucketName'
+
+  AvatarBucketArn:
+    Description: S3 bucket ARN for avatar storage
+    Value: !GetAtt AvatarBucket.Arn
+    Export:
+      Name: !Sub '${Environment}-Leaguify-AvatarBucketArn'

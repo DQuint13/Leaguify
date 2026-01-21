@@ -14,16 +14,8 @@ function CycleTracker({ games, numGames }) {
     <div style={{ 
       display: 'flex', 
       alignItems: 'center', 
-      justifyContent: 'center',
-      gap: '10px',
-      padding: '15px',
-      background: 'white',
-      borderRadius: '8px',
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+      gap: '6px'
     }}>
-      <span style={{ fontSize: '14px', fontWeight: '600', color: '#666', marginRight: '5px' }}>
-        Cycle {currentCycle}:
-      </span>
       {Array.from({ length: totalGames }, (_, i) => {
         const isCompleted = i < completedCount;
         return (
@@ -40,9 +32,6 @@ function CycleTracker({ games, numGames }) {
           </span>
         );
       })}
-      <span style={{ fontSize: '14px', color: '#666', marginLeft: '5px' }}>
-        ({completedCount}/{totalGames})
-      </span>
     </div>
   );
 }
