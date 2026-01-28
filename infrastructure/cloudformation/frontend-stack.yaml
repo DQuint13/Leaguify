@@ -58,6 +58,8 @@ Resources:
           - Id: S3Origin
             DomainName: !GetAtt FrontendBucket.RegionalDomainName
             OriginAccessControlId: !GetAtt CloudFrontOAC.Id
+            S3OriginConfig:
+              OriginReadTimeout: 30
         Enabled: true
         DefaultRootObject: index.html
         Comment: !Sub 'CloudFront distribution for ${Environment}-leaguify-frontend'
@@ -93,13 +95,6 @@ Resources:
         PriceClass: PriceClass_100
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
-        Tags:
-          - Key: Name
-            Value: !Sub '${Environment}-leaguify-frontend'
-          - Key: Environment
-            Value: !Ref Environment
-          - Key: Project
-            Value: Leaguify
 
   # S3 Bucket Policy for CloudFront OAC access
   FrontendBucketPolicy:
@@ -114,7 +109,7 @@ Resources:
             Principal:
               Service: cloudfront.amazonaws.com
             Action: s3:GetObject
-            Resource: !Sub '${FrontendBucket}/*'
+            Resource: !Sub 'arn:aws:s3:::${FrontendBucket}/*'
             Condition:
               StringEquals:
                 AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}'
@@ -144,6 +139,6 @@ Outputs:
 
   CloudFrontDistributionArn:
     Description: CloudFront distribution ARN
-    Value: !GetAtt CloudFrontDistribution.ARN
+    Value: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}'
     Export:
       Name: !Sub '${Environment}-Leaguify-CloudFrontDistributionArn'

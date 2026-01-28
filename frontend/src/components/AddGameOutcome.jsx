@@ -4,7 +4,7 @@ import { addGameOutcomes } from '../services/api';
 function AddGameOutcome({ game, players, onOutcomeAdded, onCancel }) {
   const [scores, setScores] = useState(
     players.reduce((acc, player) => {
-      acc[player.id] = 0;
+      acc[player.id] = '';
       return acc;
     }, {})
   );
@@ -14,7 +14,7 @@ function AddGameOutcome({ game, players, onOutcomeAdded, onCancel }) {
   const handleScoreChange = (playerId, value) => {
     setScores((prev) => ({
       ...prev,
-      [playerId]: parseInt(value) || 0,
+      [playerId]: value,
     }));
   };
 
@@ -26,7 +26,7 @@ function AddGameOutcome({ game, players, onOutcomeAdded, onCancel }) {
     try {
       const outcomes = players.map((player) => ({
         playerId: player.id,
-        score: scores[player.id] || 0,
+        score: parseInt(scores[player.id], 10) || 0,
       }));
 
       const response = await addGameOutcomes(game.id, outcomes);
@@ -56,10 +56,9 @@ function AddGameOutcome({ game, players, onOutcomeAdded, onCancel }) {
             <input
               type="number"
               id={`score-${player.id}`}
-              value={scores[player.id] || 0}
+              value={scores[player.id] ?? ''}
               onChange={(e) => handleScoreChange(player.id, e.target.value)}
               min="0"
-              required
             />
           </div>
         ))}

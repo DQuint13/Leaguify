@@ -301,16 +301,15 @@ async function getLeagueStatistics(leagueId) {
       [leagueId]
     );
 
-    // Get all completed cycles (excluding current cycle)
+    // Get all completed cycles (cycles with exactly num_games completed, regardless of next cycle)
     const completedCyclesQuery = await client.query(
-      `SELECT DISTINCT cycle_number 
+      `SELECT cycle_number 
        FROM games 
        WHERE league_id = $1 
-       AND cycle_number < $2 
        AND status = 'completed'
        GROUP BY cycle_number
        HAVING COUNT(*) = (SELECT num_games FROM leagues WHERE id = $1)`,
-      [leagueId, currentCycle]
+      [leagueId]
     );
     const completedCycles = completedCyclesQuery.rows.map(r => parseInt(r.cycle_number));
 
@@ -331,28 +330,28 @@ async function getLeagueStatistics(leagueId) {
       gameWinsMap[row.id] = parseInt(row.game_wins) || 0;
     });
 
-    // Calculate cycle wins (cycles where player had most wins)
+    // Calculate cycle wins (cycles where player had most victory points)
     const cycleWinsMap = {};
     for (const cycleNum of completedCycles) {
-      // Get wins per player for this cycle
-      const cycleWinsQuery = await client.query(
+      // Get total score (victory points) per player for this cycle
+      const cyclePointsQuery = await client.query(
         `SELECT 
           p.id,
-          COUNT(CASE WHEN go.result = 'win' THEN 1 END) as wins
+          COALESCE(SUM(go.score), 0) as cycle_points
         FROM players p
         LEFT JOIN game_outcomes go ON p.id = go.player_id
         LEFT JOIN games g ON go.game_id = g.id
-        WHERE p.league_id = $1 AND g.cycle_number = $2
+        WHERE p.league_id = $1 AND g.cycle_number = $2 AND g.status = 'completed'
         GROUP BY p.id
-        ORDER BY wins DESC`,
+        ORDER BY cycle_points DESC`,
         [leagueId, cycleNum]
       );
 
-      if (cycleWinsQuery.rows.length > 0) {
-        const maxWins = parseInt(cycleWinsQuery.rows[0].wins) || 0;
-        // All players with max wins get a cycle win
-        cycleWinsQuery.rows.forEach(row => {
-          if (parseInt(row.wins) === maxWins && maxWins > 0) {
+      if (cyclePointsQuery.rows.length > 0) {
+        const maxPoints = parseInt(cyclePointsQuery.rows[0].cycle_points) || 0;
+        // All players with max victory points get a cycle win
+        cyclePointsQuery.rows.forEach(row => {
+          if (parseInt(row.cycle_points) === maxPoints && maxPoints > 0) {
             cycleWinsMap[row.id] = (cycleWinsMap[row.id] || 0) + 1;
           }
         });

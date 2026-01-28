@@ -54,7 +54,6 @@ Resources:
       DBInstanceIdentifier: !Sub '${Environment}-leaguify-db'
       DBInstanceClass: !Ref DBInstanceClass
       Engine: postgres
-      EngineVersion: '15.4'
       MasterUsername: !Ref DBUsername
       MasterUserPassword: !Ref DBPassword
       DBName: !Ref DBName
@@ -110,13 +109,18 @@ Resources:
       Value: !Ref DBUsername
       Description: RDS database username
 
+  # Store database password in Parameter Store
+  # Note: CloudFormation AWS::SSM::Parameter only supports String or StringList types,
+  # not SecureString. The parameter is still protected by IAM permissions.
+  # To convert to SecureString after deployment, use:
+  # aws ssm put-parameter --name /dev/leaguify/db/password --value "password" --type SecureString --overwrite
   DBPasswordParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub '/${Environment}/leaguify/db/password'
-      Type: SecureString
+      Type: String
       Value: !Ref DBPassword
-      Description: RDS database password
+      Description: RDS database password (sensitive - protected by IAM)
 
 Outputs:
   DBEndpoint:

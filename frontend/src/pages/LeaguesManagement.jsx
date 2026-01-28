@@ -45,7 +45,7 @@ function LeaguesManagement() {
   }
 
   return (
-    <div style={{ padding: '20px', minHeight: '100vh', maxWidth: '800px', margin: '0 auto' }}>
+    <div className="page-wrapper" style={{ minHeight: '100vh', maxWidth: '800px', margin: '0 auto' }}>
       <div className="card">
         <h2 style={{ marginBottom: '20px', fontFamily: "'Caveat', cursive", fontSize: '2rem', color: '#8B4513' }}>
           Manage Games

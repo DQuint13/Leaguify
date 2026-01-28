@@ -68,10 +68,10 @@ function LeagueDashboard() {
   }
 
   return (
-    <div style={{ padding: '20px', minHeight: '100vh', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="page-wrapper" style={{ minHeight: '100vh', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Main Game Panel */}
       <div style={{ position: 'relative', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2px' }}>
+        <div className="responsive-stack" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2px' }}>
           <div className="league-name-handwritten" style={{ margin: 0 }}>{league.name}</div>
           <div className="cycle-tracker-top-right" style={{ position: 'static' }}>
             <CycleTracker games={games} numGames={league.num_games} />

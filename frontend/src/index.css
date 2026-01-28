@@ -687,3 +687,129 @@ body {
 .modal-close:hover {
   color: #333;
 }
+
+/* Page wrapper for consistent mobile padding */
+.page-wrapper {
+  padding: 20px;
+}
+
+/* Mobile and tablet scaling */
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+
+  .page-wrapper {
+    padding: 12px;
+  }
+
+  .header {
+    padding: 14px 0;
+    margin-bottom: 20px;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .league-name-handwritten {
+    font-size: 1.9rem;
+  }
+
+  .player-columns-container {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  .game-panel {
+    padding: 18px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .modal-content {
+    padding: 20px;
+    width: 92%;
+  }
+
+  .skirmish-panel {
+    padding: 14px;
+  }
+
+  .skirmish-title {
+    font-size: 1.25rem;
+  }
+
+  .btn {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 15px;
+  }
+
+  .form-group input,
+  .form-group select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .responsive-stack {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+
+  .page-wrapper {
+    padding: 10px;
+  }
+
+  .header h1 {
+    font-size: 1.25rem;
+  }
+
+  .league-name-handwritten {
+    font-size: 1.6rem;
+  }
+
+  .player-columns-container {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .game-panel {
+    padding: 14px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .stat-cards-container {
+    grid-template-columns: 1fr;
+  }
+
+  .skirmish-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .skirmish-divider {
+    width: 80%;
+    height: 4px;
+    top: auto;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  .modal-content {
+    padding: 16px;
+    width: 94%;
+  }
+}

@@ -5,7 +5,15 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "build:lambda": "npm rebuild sharp --platform=linux --arch=x64",
+    "clean": "if exist .aws-sam rmdir /s /q .aws-sam",
+    "clean:ps": "Remove-Item -Path .aws-sam -Recurse -Force -ErrorAction SilentlyContinue",
+    "build": "npm run build:lambda && sam build",
+    "build:container": "npm run build:lambda && sam build --use-container",
+    "build:force": "npm run clean:ps && npm run build:lambda && sam build",
+    "deploy": "sam deploy",
+    "deploy:guided": "sam deploy --guided"
   },
   "dependencies": {
     "express": "^4.18.2",

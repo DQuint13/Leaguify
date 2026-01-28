@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Leaguify Backend Lambda Function - Deployed via SAM
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    Description: Environment name (dev, staging, prod)
+  
+  LambdaExecutionRoleArn:
+    Type: String
+    Description: ARN of the Lambda execution role from CloudFormation backend stack
+  
+  AvatarBucketName:
+    Type: String
+    Description: Name of the S3 bucket for avatar storage from CloudFormation backend stack
+  
+  PrivateSubnet1Id:
+    Type: String
+    Description: Private Subnet 1 ID from CloudFormation main stack
+  
+  PrivateSubnet2Id:
+    Type: String
+    Description: Private Subnet 2 ID from CloudFormation main stack
+  
+  LambdaSecurityGroupId:
+    Type: String
+    Description: Lambda Security Group ID from CloudFormation main stack
+
+Globals:
+  Function:
+    Runtime: nodejs18.x
+    Timeout: 30
+    MemorySize: 512
+
+Resources:
+  # Lambda function - updates the existing function created by CloudFormation
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${Environment}-leaguify-api'
+      Handler: src/lambda.handler
+      CodeUri: .
+      Description: Leaguify API Lambda function
+      # Reference the IAM role from CloudFormation backend stack
+      Role: !Ref LambdaExecutionRoleArn
+      # Environment variables
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          DB_SSL: 'true'
+          AVATAR_BUCKET_NAME: !Ref AvatarBucketName
+          AWS_REGION: !Ref AWS::Region
+      # VPC configuration from CloudFormation main stack
+      VpcConfig:
+        SubnetIds:
+          - !Ref PrivateSubnet1Id
+          - !Ref PrivateSubnet2Id
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroupId
+      Tags:
+        Name: !Sub '${Environment}-leaguify-api'
+        Environment: !Ref Environment
+        Project: Leaguify

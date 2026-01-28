@@ -118,8 +118,8 @@ function GameOutcomes() {
   }
 
   return (
-    <div style={{ padding: '20px', minHeight: '100vh', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="page-wrapper" style={{ minHeight: '100vh', maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="responsive-stack" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ fontFamily: "'Caveat', cursive", fontSize: '2.5rem', color: '#8B4513', marginBottom: '5px' }}>
             {league.name}

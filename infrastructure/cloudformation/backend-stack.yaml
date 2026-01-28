@@ -78,11 +78,11 @@ Resources:
                   - s3:PutObject
                   - s3:GetObject
                   - s3:DeleteObject
-                Resource: !Sub '${AvatarBucket}/*'
+                Resource: !Sub 'arn:aws:s3:::${AvatarBucket}/*'
               - Effect: Allow
                 Action:
                   - s3:ListBucket
-                Resource: !Ref AvatarBucket
+                Resource: !Sub 'arn:aws:s3:::${AvatarBucket}'
 
   # CloudWatch Log Group for Lambda
   LambdaLogGroup:
@@ -122,7 +122,6 @@ Resources:
           NODE_ENV: !Ref Environment
           DB_SSL: 'true'
           AVATAR_BUCKET_NAME: !Ref AvatarBucket
-          AWS_REGION: !Ref AWS::Region
       VpcConfig:
         SubnetIds:
           - Fn::ImportValue: !Sub '${Environment}-Leaguify-PrivateSubnet1Id'
@@ -153,6 +152,27 @@ Resources:
           Value: !Ref Environment
         - Key: Project
           Value: Leaguify
+
+  # API Gateway Resource for /health
+  HealthResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: health
+
+  # API Gateway Method for GET /health
+  HealthMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref HealthResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiLambdaFunction.Arn}/invocations'
 
   # API Gateway Resource for /api
   ApiResource:
@@ -206,14 +226,18 @@ Resources:
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/*'
 
   # API Gateway Deployment
+  # Note: Description is used to force redeployment when routes change
+  # CloudFormation will create a new deployment if this changes
   ApiDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
+      - HealthMethod
       - ProxyMethod
       - ApiMethod
     Properties:
       RestApiId: !Ref ApiGateway
       StageName: !Ref Environment
+      Description: !Sub 'Deployment for ${Environment} - Routes: /health, /api, /api/{proxy+}'
 
   # Store avatar bucket name in Parameter Store
   AvatarBucketParameter:
@@ -254,3 +278,10 @@ Outputs:
     Value: !GetAtt AvatarBucket.Arn
     Export:
       Name: !Sub '${Environment}-Leaguify-AvatarBucketArn'
+
+  # Additional exports for SAM deployment
+  ApiGatewayId:
+    Description: API Gateway REST API ID
+    Value: !Ref ApiGateway
+    Export:
+      Name: !Sub '${Environment}-Leaguify-ApiGatewayId'
