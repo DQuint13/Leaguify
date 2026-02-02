@@ -35,6 +35,7 @@ yarn-error.log*
 # AWS
 .aws-sam/
 *.zip
+backend/samconfig.toml
 
 # Testing
 coverage/
