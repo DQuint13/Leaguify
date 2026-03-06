@@ -8,15 +8,24 @@ function PlayerColumn({ player, statistics, onPlayerClick }) {
   const gameWins = playerStats?.gameWins || 0;
   const currentCyclePoints = playerStats?.currentCyclePoints || 0;
 
-  // Create arrays of stickers (one per win, up to a reasonable display limit)
-  const maxDisplayStickers = 10; // Display up to 10 individual stickers
-  const cycleStickers = Array.from({ length: Math.min(cycleWins, maxDisplayStickers) }, (_, i) => (
-    <TrophySticker key={`cycle-${i}`} type="cycle" icon="🏆" count={cycleWins > maxDisplayStickers && i === maxDisplayStickers - 1 ? cycleWins : 1} />
-  ));
-  
-  const gameStickers = Array.from({ length: Math.min(gameWins, maxDisplayStickers) }, (_, i) => (
-    <TrophySticker key={`game-${i}`} type="game" icon="⭐" count={gameWins > maxDisplayStickers && i === maxDisplayStickers - 1 ? gameWins : 1} />
-  ));
+  // Group wins by 5: fullFives tokens with count=5, then one token for remainder
+  const cycleFullFives = Math.floor(cycleWins / 5);
+  const cycleRemainder = cycleWins % 5;
+  const cycleStickers = [
+    ...Array.from({ length: cycleFullFives }, (_, i) => (
+      <TrophySticker key={`cycle-5-${i}`} type="cycle" icon="🏆" count={5} trophyImageUrl={player.cycle_trophy_url || undefined} />
+    )),
+    ...(cycleRemainder > 0 ? [<TrophySticker key="cycle-rem" type="cycle" icon="🏆" count={cycleRemainder} trophyImageUrl={player.cycle_trophy_url || undefined} />] : []),
+  ];
+
+  const gameFullFives = Math.floor(gameWins / 5);
+  const gameRemainder = gameWins % 5;
+  const gameStickers = [
+    ...Array.from({ length: gameFullFives }, (_, i) => (
+      <TrophySticker key={`game-5-${i}`} type="game" icon="⭐" count={5} />
+    )),
+    ...(gameRemainder > 0 ? [<TrophySticker key="game-rem" type="game" icon="⭐" count={gameRemainder} />] : []),
+  ];
 
   return (
     <div className="player-column">
@@ -33,9 +42,6 @@ function PlayerColumn({ player, statistics, onPlayerClick }) {
               <div className="sticker-group-label">Cycle Wins</div>
               <div className="sticker-grid">
                 {cycleStickers}
-                {cycleWins > maxDisplayStickers && (
-                  <div className="sticker-more">+{cycleWins - maxDisplayStickers}</div>
-                )}
               </div>
             </div>
           )}
@@ -44,9 +50,6 @@ function PlayerColumn({ player, statistics, onPlayerClick }) {
               <div className="sticker-group-label">Game Wins</div>
               <div className="sticker-grid">
                 {gameStickers}
-                {gameWins > maxDisplayStickers && (
-                  <div className="sticker-more">+{gameWins - maxDisplayStickers}</div>
-                )}
               </div>
             </div>
           )}

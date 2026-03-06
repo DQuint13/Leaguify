@@ -1,0 +1,113 @@
+---
+description: AWS CloudFormation and SAM patterns for Leaguify
+globs: infrastructure/**/*.{yaml,yml},backend/template.yaml,backend/samconfig.toml
+alwaysApply: false
+---
+
+# AWS Infrastructure Patterns
+
+## CloudFormation Stack Organization
+
+### Stack Dependencies
+Deploy stacks in this order:
+1. **main-stack.yaml** - VPC, networking (foundation)
+2. **database-stack.yaml** - RDS PostgreSQL (depends on main-stack)
+3. **backend-stack.yaml** - Lambda, API Gateway, S3 (depends on main-stack, database-stack)
+4. **frontend-stack.yaml** - S3, CloudFront (independent)
+
+### Stack Naming
+- Use consistent naming: `dev-leaguify-*` for dev environment
+- Export outputs for cross-stack references
+- Use parameters for environment-specific values
+
+## CloudFormation Best Practices
+
+### Resource Naming
+- Use logical resource names: `LeaguifyDatabase`, `LeaguifyApiFunction`
+- Physical names via `Name` property or auto-generated
+- Use tags for resource organization
+
+### Outputs
+- Export important values: database endpoint, API URL, bucket names
+- Use `Export` for cross-stack references
+- Document outputs in comments
+
+### Parameters
+- Use parameters for environment-specific values
+- Provide default values where appropriate
+- Validate parameter values
+
+### Security
+- Use IAM roles with least privilege
+- Store secrets in Parameter Store (not in templates)
+- Use security groups to restrict access
+- Keep RDS in private subnets
+
+## AWS SAM Template
+
+### Lambda Configuration
+- Use `template.yaml` for Lambda function definition
+- Specify runtime: `nodejs18.x` or `nodejs20.x`
+- Set memory and timeout appropriately
+- Configure environment variables from Parameter Store
+
+### API Gateway
+- Define API Gateway events in SAM template
+- Use `ANY` method for Express routing flexibility
+- Configure CORS headers
+- Set up proper path mappings
+
+### Build Process
+- Use `sam build` for local builds
+- Use `sam build --use-container` for native dependencies (sharp)
+- Build artifacts go to `.aws-sam/` directory
+- Deploy with `sam deploy`
+
+## Resource Patterns
+
+### VPC Configuration
+- Use private subnets for RDS and Lambda
+- Use public subnets for NAT Gateway
+- Configure route tables correctly
+- Set up security groups for communication
+
+### Database (RDS)
+- Use PostgreSQL engine
+- Place in private subnet (no public access)
+- Use security group to allow Lambda access on port 5432
+- Store credentials in Parameter Store
+
+### Lambda Function
+- Use Node.js runtime
+- Set up VPC configuration for RDS access
+- Grant IAM permissions: RDS, S3, Parameter Store
+- Configure environment variables
+
+### S3 Buckets
+- Use bucket policies for access control
+- Enable versioning for frontend bucket
+- Configure CloudFront OAC for frontend bucket
+- Use lifecycle policies if needed
+
+## Deployment
+
+### CloudFormation Deployment
+- Use `aws cloudformation deploy` or deployment scripts
+- Validate templates before deploying
+- Monitor stack events during deployment
+- Check stack outputs after deployment
+
+### SAM Deployment
+- Use `sam deploy` for Lambda functions
+- Configure `samconfig.toml` for deployment settings
+- Use `--guided` flag for first-time setup
+- Monitor CloudWatch logs after deployment
+
+## Best Practices
+
+- Never hardcode resource IDs or ARNs
+- Use CloudFormation outputs for cross-stack references
+- Test infrastructure changes in dev before prod
+- Document all parameters and outputs
+- Use version control for all templates
+- Review IAM permissions carefully

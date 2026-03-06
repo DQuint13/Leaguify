@@ -425,10 +425,10 @@ body {
 }
 
 .trophy-sticker {
-  width: 50px;
-  height: 50px;
+  width: 96px;
+  height: 96px;
   background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -480,6 +480,38 @@ body {
   font-size: 24px;
   line-height: 1;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.sticker-trophy-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 2px;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+}
+
+.sticker-5x .sticker-icon,
+.sticker-5x .sticker-trophy-img {
+  position: absolute;
+  width: 55%;
+  height: 55%;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0.9;
+}
+
+.sticker-5x-label {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  font-weight: bold;
+  color: rgba(0, 0, 0, 0.85);
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+  line-height: 1;
 }
 
 .sticker-count {

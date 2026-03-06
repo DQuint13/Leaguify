@@ -5,236 +5,97 @@ A web application for creating leagues, tracking game statistics, and managing p
 ## Features
 
 - **League Management**: Create leagues with a specified number of players and games
-- **Game Tracking**: Track game outcomes and scores
-- **Statistics Dashboard**: View detailed statistics including:
-  - Win/Loss records
-  - Total points scored/against
-  - Win percentage
-  - League rankings
-  - Point differentials
+- **Game Tracking**: Track game outcomes and scores (victory points)
+- **Statistics Dashboard**: View cycle wins (by victory points), game wins, and current-cycle points
+- **Cycles**: Games are grouped into cycles; completing all games in a cycle can start the next one automatically
 
 ## Architecture
 
-- **Frontend**: React SPA deployed to S3 with CloudFront
-- **Backend**: Node.js/Express API deployed as Lambda functions behind API Gateway
-- **Database**: RDS PostgreSQL instance
-- **Infrastructure**: AWS CloudFormation templates
+- **Frontend**: React + Vite, deployed to S3 + CloudFront
+- **Backend**: Node.js/Express on AWS Lambda via API Gateway
+- **Database**: PostgreSQL on AWS RDS
+- **Infrastructure**: CloudFormation stacks + AWS SAM for Lambda
 
 ## Project Structure
 
 ```
 Leaguify/
-├── frontend/          # React frontend application
-├── backend/           # Node.js/Express backend API
-├── infrastructure/    # CloudFormation templates and deployment scripts
+├── frontend/          # React + Vite app (pages, components, services/api.js)
+├── backend/           # Express API (routes, controllers, models/database.js), SAM template
+├── infrastructure/    # CloudFormation templates and deploy scripts
+├── scripts/           # Local setup (setup-local.ps1, setup-local.sh)
 └── README.md
 ```
 
 ## Prerequisites
 
-- Node.js 18.x or higher
-- AWS CLI configured with appropriate credentials
-- AWS account with permissions to create:
-  - VPC, Subnets, Internet Gateway, NAT Gateway
-  - RDS PostgreSQL instances
-  - Lambda functions
-  - API Gateway
-  - S3 buckets
-  - CloudFront distributions
-  - IAM roles and policies
+- **Local development**: Node.js 18+, npm. Optional: Docker (for PostgreSQL).
+- **AWS deployment**: See [DEPLOYMENT.md](DEPLOYMENT.md).
 
-## Local Development
+## Starting the Local Environment
 
-### Backend Setup
+You need three things running: **PostgreSQL**, the **backend API**, and the **frontend**.
 
-1. Install dependencies:
-```bash
-cd backend
-npm install
-```
+### Option A: Quick start (recommended)
 
-2. Set up environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your database credentials
-```
+1. **One-time setup** (installs deps, optionally starts PostgreSQL via Docker):
 
-3. Start the development server:
-```bash
-npm run dev
-```
+   **Windows (PowerShell):**
+   ```powershell
+   .\scripts\setup-local.ps1
+   ```
+   **Linux/Mac:**
+   ```bash
+   ./scripts/setup-local.sh
+   ```
 
-The backend will run on `http://localhost:3001`
+2. **Backend** – from the repo root:
+   ```bash
+   cd backend
+   cp .env.example .env
+   # Edit .env if your DB is not localhost:5432 / postgres / postgres / leaguify
+   npm run dev
+   ```
+   Backend runs at **http://localhost:3001**.
 
-### Frontend Setup
+3. **Frontend** – in a second terminal:
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+   Frontend runs at **http://localhost:5173** (Vite default). It uses `http://localhost:3001` for the API unless you set `VITE_API_BASE_URL`.
 
-1. Install dependencies:
-```bash
-cd frontend
-npm install
-```
+4. Open the frontend URL in your browser. If you have no leagues, create one from the home page.
 
-2. Start the development server:
-```bash
-npm run dev
-```
+### Option B: Manual setup
 
-The frontend will run on `http://localhost:3000`
+1. **PostgreSQL**  
+   - With Docker:  
+     `docker run --name leaguify-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=leaguify -p 5432:5432 -d postgres:15`  
+   - Or install PostgreSQL and create a database (e.g. `leaguify`).
 
-### Database Setup
+2. **Backend**
+   ```bash
+   cd backend
+   npm install
+   cp .env.example .env
+   # Set DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD in .env
+   npm run dev
+   ```
 
-For local development, you'll need a PostgreSQL database. You can use Docker:
+3. **Frontend**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
 
-```bash
-docker run --name leaguify-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=leaguify -p 5432:5432 -d postgres:15
-```
+The backend creates the required tables on first run (schema in `backend/src/models/database.js`).
 
-The application will automatically create the necessary tables on startup.
+## Documentation
 
-## AWS Deployment
-
-### Step 1: Deploy Infrastructure
-
-Navigate to the infrastructure directory and run the deployment script:
-
-**Linux/Mac:**
-```bash
-cd infrastructure/scripts
-chmod +x deploy.sh
-./deploy.sh dev us-east-1
-```
-
-**Windows (PowerShell):**
-```powershell
-cd infrastructure\scripts
-.\deploy.ps1 dev us-east-1
-```
-
-This will deploy the CloudFormation stacks in the correct order:
-1. Main stack (VPC, networking)
-2. Database stack (RDS PostgreSQL)
-3. Backend stack (API Gateway, Lambda)
-4. Frontend stack (S3, CloudFront)
-
-### Step 2: Deploy Backend
-
-1. Install Serverless Framework:
-```bash
-npm install -g serverless
-```
-
-2. Deploy the Lambda function:
-```bash
-cd backend
-npm install
-serverless deploy --stage dev
-```
-
-### Step 3: Build and Deploy Frontend
-
-1. Build the React application:
-```bash
-cd frontend
-npm install
-npm run build
-```
-
-2. Get your S3 bucket name from CloudFormation outputs:
-```bash
-aws cloudformation describe-stacks \
-  --stack-name dev-leaguify-frontend-stack \
-  --query "Stacks[0].Outputs[?OutputKey=='FrontendBucketName'].OutputValue" \
-  --output text
-```
-
-3. Upload the build to S3:
-```bash
-aws s3 sync dist/ s3://<bucket-name> --delete
-```
-
-4. Invalidate CloudFront cache:
-```bash
-aws cloudformation describe-stacks \
-  --stack-name dev-leaguify-frontend-stack \
-  --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" \
-  --output text | xargs -I {} aws cloudfront create-invalidation \
-  --distribution-id {} \
-  --paths "/*"
-```
-
-### Step 4: Configure Frontend API URL
-
-Before building the frontend, create a `.env.production` file in the `frontend` directory:
-
-```env
-VITE_API_BASE_URL=https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/dev
-```
-
-Get the API Gateway URL from CloudFormation outputs:
-```bash
-aws cloudformation describe-stacks \
-  --stack-name dev-leaguify-backend-stack \
-  --query "Stacks[0].Outputs[?OutputKey=='ApiGatewayUrl'].OutputValue" \
-  --output text
-```
-
-Then rebuild and redeploy:
-```bash
-npm run build
-aws s3 sync dist/ s3://<bucket-name> --delete
-```
-
-## API Endpoints
-
-### Leagues
-- `POST /api/leagues` - Create a new league
-- `GET /api/leagues/:id` - Get league details
-- `GET /api/leagues/:id/players` - Get all players in a league
-- `GET /api/leagues/:id/games` - Get all games in a league
-
-### Games
-- `POST /api/games/:gameId/outcomes` - Add game outcomes
-- `GET /api/games/:gameId/outcomes` - Get game outcomes
-
-### Statistics
-- `GET /api/statistics/leagues/:id` - Get league statistics and rankings
-
-## Database Schema
-
-- **leagues**: League information
-- **players**: Player information
-- **games**: Game information
-- **game_outcomes**: Individual game results
-
-## Cost Considerations
-
-The default configuration uses:
-- `db.t3.micro` RDS instance (eligible for free tier)
-- Lambda with 512MB memory
-- S3 and CloudFront (pay-per-use)
-
-For production, consider:
-- Using RDS Multi-AZ for high availability
-- Increasing Lambda memory/timeout as needed
-- Setting up CloudFront caching policies
-- Enabling RDS automated backups
-
-## Troubleshooting
-
-### Database Connection Issues
-- Verify security groups allow Lambda to access RDS on port 5432
-- Check that Lambda is in the correct VPC subnets
-- Verify database credentials in Parameter Store
-
-### API Gateway Issues
-- Ensure Lambda function has proper permissions
-- Check Lambda function logs in CloudWatch
-- Verify API Gateway integration settings
-
-### Frontend Not Loading
-- Check S3 bucket policy allows CloudFront access
-- Verify CloudFront distribution is deployed
-- Check browser console for API errors
+- **[SPEC.md](SPEC.md)** – Product spec, architecture, API reference, and design notes
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** – AWS deployment runbook (code-only updates, full infra, custom domain, troubleshooting)
 
 ## License
 

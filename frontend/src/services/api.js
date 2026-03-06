@@ -40,6 +40,12 @@ export const getGames = async (leagueId) => {
   return response.data;
 };
 
+/** Outcomes for all games in the league, keyed by gameId: { [gameId]: outcomes[] } */
+export const getLeagueOutcomes = async (leagueId) => {
+  const response = await api.get(`/api/leagues/${leagueId}/outcomes`);
+  return response.data;
+};
+
 export const addGame = async (leagueId) => {
   const response = await api.post(`/api/leagues/${leagueId}/games`);
   return response.data;

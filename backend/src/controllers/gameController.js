@@ -80,20 +80,37 @@ async function addGameOutcomeHandler(req, res) {
       cycleStarted: cycleCheckResult.cycleStarted || false,
       newCycleNumber: cycleCheckResult.newCycleNumber || null,
     });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Outcomes added', { gameId, status: 200 });
+    }
   } catch (error) {
-    console.error('Error adding game outcomes:', error);
+    console.error('Error adding game outcomes:', {
+      gameId: req.params?.gameId,
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+    });
     res.status(500).json({ error: 'Failed to add game outcomes' });
   }
 }
 
 async function getGameOutcomeHandler(req, res) {
+  const { gameId } = req.params;
   try {
-    const { gameId } = req.params;
     const outcomes = await getGameOutcomes(gameId);
     res.json(outcomes);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Outcomes fetched', { gameId, status: 200, count: outcomes?.length });
+    }
   } catch (error) {
-    console.error('Error fetching game outcomes:', error);
-    res.status(500).json({ error: 'Failed to fetch game outcomes' });
+    console.error('Error fetching game outcomes:', {
+      gameId,
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+    });
+    res.status(500).json({
+      error: 'Failed to fetch game outcomes',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
 }
 

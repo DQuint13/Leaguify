@@ -4,6 +4,7 @@ const {
   getLeagueById,
   getPlayersByLeague,
   getGamesByLeague,
+  getOutcomesByLeague,
   getCurrentCycleGames,
   startNewCycle,
   addGameToLeague,
@@ -124,6 +125,24 @@ async function getGamesHandler(req, res) {
   }
 }
 
+/** GET /api/leagues/:id/outcomes - all outcomes for all games in the league, grouped by gameId */
+async function getLeagueOutcomesHandler(req, res) {
+  try {
+    const { id: leagueId } = req.params;
+    const rows = await getOutcomesByLeague(leagueId);
+    const outcomesByGame = {};
+    for (const row of rows) {
+      const gameId = row.game_id;
+      if (!outcomesByGame[gameId]) outcomesByGame[gameId] = [];
+      outcomesByGame[gameId].push(row);
+    }
+    res.json(outcomesByGame);
+  } catch (error) {
+    console.error('Error fetching league outcomes:', { leagueId: req.params?.id, message: error.message });
+    res.status(500).json({ error: 'Failed to fetch league outcomes' });
+  }
+}
+
 async function startNewCycleHandler(req, res) {
   try {
     const { id: leagueId } = req.params;
@@ -194,6 +213,7 @@ module.exports = {
   getLeagueHandler,
   getPlayersHandler,
   getGamesHandler,
+  getLeagueOutcomesHandler,
   startNewCycleHandler,
   addGameHandler,
   createMockDataHandler,

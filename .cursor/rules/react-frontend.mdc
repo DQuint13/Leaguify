@@ -1,0 +1,85 @@
+---
+description: React and frontend patterns for Leaguify
+globs: frontend/**/*.{jsx,js,tsx,ts}
+alwaysApply: false
+---
+
+# React Frontend Patterns
+
+## Component Structure
+
+### Functional Components
+- Always use functional components with hooks
+- Use `export default` for page components
+- Use named exports for reusable components
+
+```jsx
+// ✅ GOOD
+function PlayerCard({ player }) {
+  return <div>{player.name}</div>;
+}
+
+export default PlayerCard;
+```
+
+### File Organization
+- **Pages**: `frontend/src/pages/` - Route-level components
+- **Components**: `frontend/src/components/` - Reusable UI components
+- **Services**: `frontend/src/services/` - API calls and utilities
+
+## API Integration
+
+### Using the API Service
+- Always use functions from `services/api.js` for API calls
+- Never make direct `fetch` or `axios` calls in components
+- Handle loading and error states
+
+```jsx
+// ✅ GOOD
+import { getLeague } from '../services/api';
+
+function LeagueDashboard() {
+  const [league, setLeague] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    getLeague(id)
+      .then(setLeague)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [id]);
+}
+```
+
+### Error Handling
+- Always catch API errors and display user-friendly messages
+- Show loading states during API calls
+- Handle empty states gracefully
+
+## React Router
+
+- Use `react-router-dom` for routing
+- Routes defined in `App.jsx`
+- Use `useParams()` to get route parameters
+- Use `useNavigate()` for programmatic navigation
+
+## State Management
+
+- Use `useState` for local component state
+- Use `useEffect` for side effects (API calls, subscriptions)
+- Pass data down via props, lift state up when needed
+- No global state management library (keep it simple)
+
+## Styling
+
+- Use inline styles for simple styling: `style={{ margin: '20px' }}`
+- Use className for CSS classes when needed
+- Keep styles close to components
+
+## Best Practices
+
+- Keep components small and focused
+- Extract reusable logic into custom hooks if needed
+- Use descriptive prop names
+- Handle edge cases (empty arrays, null values, etc.)

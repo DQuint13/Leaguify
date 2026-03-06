@@ -8,18 +8,27 @@ const AVAILABLE_AVATARS = [
   '/MarioAvatar.png',
 ];
 
+const AVAILABLE_CYCLE_TROPHIES = [
+  { id: 'default', label: 'Default', url: null },
+  { id: 'dragon', label: 'Dragon', url: '/dragonWomp.png' },
+  { id: 'glukgluk', label: 'Gluk Gluk', url: '/glukgluk.png' },
+  { id: 'blickycat', label: 'Blicky Cat', url: '/BlickyCat.png' },
+  { id: 'dianaworm', label: 'Diana Worm', url: '/dianaWorm.png' },
+];
+
 function EditPlayers({ players, leagueId, onUpdate, onCancel }) {
   const [editedPlayers, setEditedPlayers] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Initialize with current player names and avatars
+    // Initialize with current player names, avatars, and cycle trophy
     setEditedPlayers(
       players.map((player) => ({
         id: player.id,
         name: player.name,
         avatar_url: player.avatar_url || '/StephAvatar.png',
+        cycle_trophy_url: player.cycle_trophy_url ?? null,
       }))
     );
   }, [players]);
@@ -36,6 +45,14 @@ function EditPlayers({ players, leagueId, onUpdate, onCancel }) {
     setEditedPlayers((prev) =>
       prev.map((player) =>
         player.id === playerId ? { ...player, avatar_url: avatarUrl } : player
+      )
+    );
+  };
+
+  const handleCycleTrophyChange = (playerId, cycleTrophyUrl) => {
+    setEditedPlayers((prev) =>
+      prev.map((player) =>
+        player.id === playerId ? { ...player, cycle_trophy_url: cycleTrophyUrl } : player
       )
     );
   };
@@ -62,6 +79,7 @@ function EditPlayers({ players, leagueId, onUpdate, onCancel }) {
           id: player.id,
           name: player.name.trim(),
           avatar_url: player.avatar_url,
+          cycle_trophy_url: player.cycle_trophy_url,
         }))
       );
       onUpdate();
@@ -125,6 +143,57 @@ function EditPlayers({ players, leagueId, onUpdate, onCancel }) {
                       />
                     </div>
                   ))}
+                </div>
+              </div>
+              <div style={{ flex: '0 0 auto' }}>
+                <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>
+                  Cycle Trophy
+                </label>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {AVAILABLE_CYCLE_TROPHIES.map((trophy) => {
+                    const isSelected = (player.cycle_trophy_url ?? null) === trophy.url;
+                    return (
+                      <div
+                        key={trophy.id}
+                        onClick={() => handleCycleTrophyChange(player.id, trophy.url)}
+                        style={{
+                          width: '60px',
+                          height: '60px',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          border: isSelected ? '3px solid #3498db' : '2px solid #ddd',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          backgroundColor: isSelected ? '#e8f4fc' : '#f5f5f5',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.borderColor = '#3498db';
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.borderColor = '#ddd';
+                            e.currentTarget.style.transform = 'scale(1)';
+                          }
+                        }}
+                      >
+                        {trophy.url ? (
+                          <img
+                            src={trophy.url}
+                            alt={trophy.label}
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                          />
+                        ) : (
+                          <span style={{ fontSize: '28px' }}>🏆</span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               <div style={{ flex: 1 }}>

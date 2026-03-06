@@ -17,8 +17,20 @@ capabilities = "CAPABILITY_IAM"
 confirm_changeset = false
 resolve_s3 = true
 region = "us-east-1"
+# NOTE: For security, pass DBPassword via command line instead:
+# sam deploy --parameter-overrides "DBPassword=YOUR_PASSWORD"
 parameter_overrides = [
-  "Environment=dev"
+  "Environment=dev",
+  "LambdaExecutionRoleArn=arn:aws:iam::641623447159:role/dev-leaguify-backend-stack-LambdaExecutionRole-If6szFzAvBwy",
+  "AvatarBucketName=dev-leaguify-avatars-641623447159",
+  "PrivateSubnet1Id=subnet-092aae4c682c04a2e",
+  "PrivateSubnet2Id=subnet-0a6b3dff22f05fa08",
+  "LambdaSecurityGroupId=sg-05d3ff79706c5bca4",
+  "DBHost=dev-leaguify-db.cg9w8ygsanek.us-east-1.rds.amazonaws.com",
+  "DBPort=5432",
+  "DBName=leaguify",
+  "DBUser=postgres",
+  "DBPassword=TerranandJ4"
 ]
 image_repositories = []
 

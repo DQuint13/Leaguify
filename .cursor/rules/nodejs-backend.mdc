@@ -1,0 +1,108 @@
+---
+description: Node.js and Express backend patterns for Leaguify
+globs: backend/**/*.js
+alwaysApply: false
+---
+
+# Node.js Backend Patterns
+
+## Express Structure
+
+### Route Organization
+- Routes in `backend/src/routes/` - Define endpoints
+- Controllers in `backend/src/controllers/` - Business logic
+- Models in `backend/src/models/` - Database operations
+
+```javascript
+// ✅ GOOD - Route file
+const router = require('express').Router();
+const { createLeagueHandler } = require('../controllers/leagueController');
+
+router.post('/', createLeagueHandler);
+module.exports = router;
+```
+
+### Controller Pattern
+- Controllers are async functions: `async function handlerName(req, res)`
+- Always use try-catch for error handling
+- Return appropriate HTTP status codes
+- Validate input before processing
+
+```javascript
+// ✅ GOOD
+async function createLeagueHandler(req, res) {
+  try {
+    const { name, numPlayers } = req.body;
+    
+    // Validate input
+    if (!name || !numPlayers) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Call database function
+    const result = await createLeague(name, numPlayers);
+    
+    // Return success
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('Error creating league:', error);
+    res.status(500).json({ error: error.message || 'Failed to create league' });
+  }
+}
+```
+
+## Database Access
+
+### Database Functions
+- All database operations in `backend/src/models/database.js`
+- Use connection pool from `initDatabase()`
+- Use parameterized queries to prevent SQL injection
+- Return promises (async/await compatible)
+
+```javascript
+// ✅ GOOD
+async function getLeagueById(id) {
+  const result = await pool.query(
+    'SELECT * FROM leagues WHERE id = $1',
+    [id]
+  );
+  return result.rows[0];
+}
+```
+
+### Error Handling
+- Database errors should be caught and logged
+- Return meaningful error messages to API consumers
+- Use appropriate HTTP status codes (400 for validation, 404 for not found, 500 for server errors)
+
+## Lambda Compatibility
+
+### Serverless Deployment
+- Code must work in both local Express server and Lambda
+- Use `lambda.js` wrapper for Lambda handler
+- Check `process.env.AWS_LAMBDA_FUNCTION_NAME` to detect Lambda environment
+- Database initialization only runs locally (Lambda uses existing pool)
+
+### Environment Variables
+- Local: Use `.env` file with `dotenv`
+- Lambda: Read from Parameter Store using AWS SDK
+- Never hardcode credentials
+
+## API Response Format
+
+- Success: Return data directly or in `{ data: ... }` format
+- Errors: Always return `{ error: 'message' }` format
+- Use consistent status codes:
+  - 200: Success
+  - 201: Created
+  - 400: Bad Request (validation errors)
+  - 404: Not Found
+  - 500: Internal Server Error
+
+## Best Practices
+
+- Keep controllers thin - business logic in controllers, data access in models
+- Validate all user input
+- Use async/await consistently
+- Log errors with context
+- Handle edge cases (empty results, null values)

@@ -1,0 +1,67 @@
+---
+description: Leaguify project structure, conventions, and AWS patterns
+alwaysApply: true
+---
+
+# Leaguify Project Overview
+
+## Project Structure
+
+Leaguify is a full-stack league statistics tracking application deployed on AWS.
+
+**Architecture:**
+- **Frontend**: React + Vite, deployed to S3 + CloudFront
+- **Backend**: Node.js/Express on AWS Lambda via API Gateway
+- **Database**: PostgreSQL on AWS RDS
+- **Infrastructure**: CloudFormation stacks + AWS SAM for Lambda
+
+**Directory Structure:**
+```
+Leaguify/
+├── frontend/          # React application
+├── backend/           # Node.js/Express API
+├── infrastructure/    # CloudFormation templates
+└── scripts/          # Deployment and setup scripts
+```
+
+## Key Conventions
+
+### API Routes
+- All API routes are prefixed with `/api/`
+- Routes are organized by resource: `/api/leagues`, `/api/games`, `/api/statistics`
+- Use RESTful conventions: GET, POST, PUT, DELETE
+
+### Error Handling
+- Backend: Always use try-catch in async handlers, return appropriate HTTP status codes
+- Frontend: Handle API errors gracefully, show user-friendly messages
+- Log errors with context: `console.error('Error description:', error)`
+
+### Environment Variables
+- Backend: Use `process.env` for configuration (DB credentials from Parameter Store in Lambda)
+- Frontend: Use `import.meta.env.VITE_*` for Vite environment variables
+- Never commit `.env` files (use `.env.example`)
+
+### Database
+- Use connection pooling via `pg` library
+- All database operations are in `backend/src/models/database.js`
+- Controllers call database functions, never write SQL directly in controllers
+
+### AWS Deployment
+- Backend: Deploy using AWS SAM (`sam build`, `sam deploy`)
+- Frontend: Build with Vite, upload to S3, CloudFront serves it
+- Infrastructure: Deploy CloudFormation stacks in order: main → database → backend → frontend
+
+## Important Files
+
+- `SPEC.md` - Product spec, architecture, API, and ideas
+- `DEPLOYMENT.md` - Deployment runbook
+- `backend/src/models/database.js` - Database schema and queries
+- `frontend/src/services/api.js` - All API client functions
+- `infrastructure/cloudformation/*.yaml` - Infrastructure definitions
+
+## When Making Changes
+
+1. **Backend changes**: Test locally first, then deploy with SAM
+2. **Frontend changes**: Test with `npm run dev`, build and deploy to S3
+3. **Database changes**: Update `database.js` schema, migrations may be needed
+4. **Infrastructure changes**: Update CloudFormation templates, deploy stacks

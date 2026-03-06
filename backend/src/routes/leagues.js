@@ -7,6 +7,7 @@ const {
   getLeagueHandler,
   getPlayersHandler,
   getGamesHandler,
+  getLeagueOutcomesHandler,
   startNewCycleHandler,
   addGameHandler,
   createMockDataHandler,
@@ -39,6 +40,9 @@ router.post('/', createLeagueHandler);
 
 // Get all leagues (must be before /:id route)
 router.get('/', getAllLeaguesHandler);
+
+// Get all outcomes for all games in a league (must be before /:id so :id/outcomes matches)
+router.get('/:id/outcomes', getLeagueOutcomesHandler);
 
 // Get league by ID
 router.get('/:id', getLeagueHandler);

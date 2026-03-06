@@ -63,6 +63,19 @@ async function createTables() {
       WHERE avatar_url IS NULL OR avatar_url = '';
     `);
 
+    // Add cycle_trophy_url column if it doesn't exist (migration)
+    await client.query(`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name='players' AND column_name='cycle_trophy_url'
+        ) THEN
+          ALTER TABLE players ADD COLUMN cycle_trophy_url VARCHAR(500);
+        END IF;
+      END $$;
+    `);
+
     // Create games table
     await client.query(`
       CREATE TABLE IF NOT EXISTS games (
@@ -281,6 +294,18 @@ async function getGameOutcomes(gameId) {
   const result = await pool.query(
     'SELECT * FROM game_outcomes WHERE game_id = $1',
     [gameId]
+  );
+  return result.rows;
+}
+
+/** Returns all game outcomes for a league (all games in the league). Rows include game_id. */
+async function getOutcomesByLeague(leagueId) {
+  const result = await pool.query(
+    `SELECT go.* FROM game_outcomes go
+     INNER JOIN games g ON g.id = go.game_id
+     WHERE g.league_id = $1
+     ORDER BY g.cycle_number, g.game_number, go.player_id`,
+    [leagueId]
   );
   return result.rows;
 }
@@ -590,6 +615,12 @@ async function updatePlayers(updates) {
         paramIndex++;
       }
 
+      if (update.cycle_trophy_url !== undefined) {
+        updateFields.push(`cycle_trophy_url = $${paramIndex}`);
+        updateValues.push(update.cycle_trophy_url);
+        paramIndex++;
+      }
+
       const result = await client.query(
         `UPDATE players SET ${updateFields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
         [...updateValues, update.id]
@@ -759,6 +790,7 @@ module.exports = {
   getGameById,
   addGameOutcomes,
   getGameOutcomes,
+  getOutcomesByLeague,
   getLeagueStatistics,
   updatePlayerName,
   updatePlayerAvatar,

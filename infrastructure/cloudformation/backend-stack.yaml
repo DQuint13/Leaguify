@@ -220,15 +220,39 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/*'
 
+  # CORS: Add CORS headers to API Gateway default error responses (4XX/5XX).
+  # Without these, browser blocks error responses when frontend uses a different origin (e.g. custom domain).
+  GatewayResponse4xx:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResponseType: DEFAULT_4XX
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+        gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+
+  GatewayResponse5xx:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResponseType: DEFAULT_5XX
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+        gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+
   # API Gateway Deployment
   # Note: Description is used to force redeployment when routes change
-  # CloudFormation will create a new deployment if this changes
+  # DependsOn gateway responses so 4XX/5XX (e.g. 504 timeout) include CORS
   ApiDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
       - HealthMethod
       - ProxyMethod
       - ApiMethod
+      - GatewayResponse4xx
+      - GatewayResponse5xx
     Properties:
       RestApiId: !Ref ApiGateway
       StageName: !Ref Environment

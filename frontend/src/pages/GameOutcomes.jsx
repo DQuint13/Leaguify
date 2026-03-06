@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getLeague, getPlayers, getGames, getGameOutcomes, addGameOutcomes, addGame } from '../services/api';
+import { getLeague, getPlayers, getGames, getLeagueOutcomes, getGameOutcomes, addGameOutcomes, addGame } from '../services/api';
 import AddGameOutcome from '../components/AddGameOutcome';
 
 function GameOutcomes() {
@@ -22,26 +22,16 @@ function GameOutcomes() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [leagueData, playersData, gamesData] = await Promise.all([
+      const [leagueData, playersData, gamesData, outcomesByGame] = await Promise.all([
         getLeague(id),
         getPlayers(id),
         getGames(id),
+        getLeagueOutcomes(id),
       ]);
       setLeague(leagueData);
       setPlayers(playersData);
       setGames(gamesData);
-      
-      // Load outcomes for completed games
-      const completedGames = gamesData.filter(g => g.status === 'completed');
-      const outcomesPromises = completedGames.map(game => 
-        getGameOutcomes(game.id).then(outcomes => ({ gameId: game.id, outcomes }))
-      );
-      const outcomesResults = await Promise.all(outcomesPromises);
-      const outcomesMap = {};
-      outcomesResults.forEach(({ gameId, outcomes }) => {
-        outcomesMap[gameId] = outcomes;
-      });
-      setGameOutcomes(outcomesMap);
+      setGameOutcomes(outcomesByGame || {});
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load data');
     } finally {

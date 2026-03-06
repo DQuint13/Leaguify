@@ -6,7 +6,7 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Middleware - CORS for all (OPTIONS preflight and error responses). Lambda layer merges once to avoid duplicate.
 app.use(cors());
 app.use(express.json());
 app.use(express.raw({ type: 'image/*', limit: '5mb' }));
@@ -44,7 +44,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Error handling middleware
+// Error handling middleware (Express cors() already sets CORS on all responses)
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
